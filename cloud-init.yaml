@@ -1,0 +1,33 @@
+#cloud-config
+
+# Minimal bootstrap for devbox VM
+# Ansible handles the bulk of provisioning after cloud-init completes
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - python3
+  - python3-pip
+  - openssh-server
+  - curl
+  - git
+  - build-essential
+  - ca-certificates
+  - gnupg
+
+# Ensure ubuntu user has passwordless sudo
+users:
+  - default
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys: []
+
+# Ensure SSH is running
+runcmd:
+  - systemctl enable ssh
+  - systemctl start ssh
+
+# Write a marker when cloud-init is done
+final_message: "Cloud-init completed after $UPTIME seconds"

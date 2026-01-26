@@ -1,0 +1,81 @@
+---
+# mise version manager installation
+
+- name: Check if mise is installed
+  ansible.builtin.stat:
+    path: "{{ dev_user_home }}/.local/bin/mise"
+  register: mise_binary
+
+- name: Install mise
+  ansible.builtin.shell: |
+    curl https://mise.run | sh
+  args:
+    creates: "{{ dev_user_home }}/.local/bin/mise"
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  when: not mise_binary.stat.exists
+
+- name: Add mise to .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.bashrc"
+    line: 'eval "$(~/.local/bin/mise activate bash)"'
+    create: true
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Add mise to .zshrc
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.zshrc"
+    line: 'eval "$(~/.local/bin/mise activate zsh)"'
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Add ~/.local/bin to PATH in .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.bashrc"
+    line: 'export PATH="$HOME/.local/bin:$PATH"'
+    insertbefore: 'eval "$(~/.local/bin/mise activate bash)"'
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Add ~/.local/bin to PATH in .zshrc
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.zshrc"
+    line: 'export PATH="$HOME/.local/bin:$PATH"'
+    insertbefore: 'eval "$(~/.local/bin/mise activate zsh)"'
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Trust mise configuration
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/mise trust --all
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  changed_when: false
+  failed_when: false
+
+- name: Install Node.js via mise (required for Gemini CLI)
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/mise use --global node@{{ mise_node_version }}
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  args:
+    creates: "{{ dev_user_home }}/.local/share/mise/installs/node"
+
+- name: Verify mise installation
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/mise --version
+  become: true
+  become_user: "{{ dev_user }}"
+  register: mise_version
+  changed_when: false
+
+- name: Show mise version
+  ansible.builtin.debug:
+    msg: "mise version: {{ mise_version.stdout }}"

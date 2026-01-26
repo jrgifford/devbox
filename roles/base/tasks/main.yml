@@ -1,0 +1,42 @@
+---
+# Base system configuration
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Install common packages
+  ansible.builtin.apt:
+    name:
+      - jq
+      - htop
+      - unzip
+      - wget
+      - tree
+      - vim
+      - tmux
+      - make
+      - gcc
+      - g++
+      - libssl-dev
+      - pkg-config
+    state: present
+    update_cache: true
+
+- name: Add GitHub CLI apt key
+  ansible.builtin.apt_key:
+    url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+    keyring: /usr/share/keyrings/githubcli-archive-keyring.gpg
+    state: present
+
+- name: Add GitHub CLI apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main"
+    state: present
+    filename: github-cli
+
+- name: Install GitHub CLI
+  ansible.builtin.apt:
+    name: gh
+    state: present
+    update_cache: true

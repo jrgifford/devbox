@@ -1,0 +1,20 @@
+---
+# Shared variables for all hosts
+
+# User configuration
+dev_user: ubuntu
+dev_user_home: /home/ubuntu
+
+# Timezone
+timezone: America/New_York
+
+# Tailscale configuration
+# Auth key is read from TAILSCALE_AUTH_KEY environment variable
+tailscale_auth_key: "{{ lookup('env', 'TAILSCALE_AUTH_KEY') }}"
+tailscale_hostname: devbox
+
+# mise configuration
+mise_node_version: "22"  # LTS version for Gemini CLI
+
+# Shell configuration
+default_shell: /usr/bin/zsh

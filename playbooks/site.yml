@@ -1,0 +1,77 @@
+---
+# Main playbook for devbox provisioning
+# Run order is important: base system first, then tools that depend on it
+
+- name: Configure devbox
+  hosts: all
+  become: true
+  gather_facts: true
+  vars_files:
+    - ../group_vars/all.yml
+
+  pre_tasks:
+    - name: Wait for apt lock to be released
+      ansible.builtin.shell: |
+        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          echo "Waiting for apt lock..."
+          sleep 5
+        done
+      changed_when: false
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+  roles:
+    # System foundation
+    - role: base
+      tags: [base, system]
+
+    # Docker (early, some tools may need it)
+    - role: docker
+      tags: [docker, system]
+
+    # Tailscale networking
+    - role: tailscale
+      tags: [tailscale, networking]
+
+    # Shell environment
+    - role: shell
+      tags: [shell, user]
+
+    # Version manager (mise)
+    - role: mise
+      tags: [mise, runtimes]
+
+    # Language runtimes
+    - role: runtimes
+      tags: [runtimes, languages]
+
+    # AI coding agents
+    - role: ai-agents
+      tags: [ai-agents, tools]
+
+  post_tasks:
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg: |
+          ==========================================
+          Devbox provisioning complete!
+
+          Installed tools:
+          - mise (version manager)
+          - uv (Python)
+          - bun (JavaScript)
+          - rustup (Rust)
+          - Docker
+          - GitHub CLI (gh)
+          - Tailscale
+          - Claude Code
+          - Codex CLI
+          - Gemini CLI
+
+          Shell: zsh with oh-my-zsh + powerlevel10k
+
+          Run './devbox login' to enter the VM
+          ==========================================

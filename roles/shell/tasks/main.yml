@@ -1,0 +1,43 @@
+---
+# Shell environment setup (zsh, oh-my-zsh, powerlevel10k)
+
+- name: Install zsh
+  ansible.builtin.apt:
+    name: zsh
+    state: present
+    update_cache: true
+
+- name: Check if oh-my-zsh is installed
+  ansible.builtin.stat:
+    path: "{{ dev_user_home }}/.oh-my-zsh"
+  register: ohmyzsh_dir
+
+- name: Install oh-my-zsh
+  ansible.builtin.shell: |
+    curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | sh -s -- --unattended
+  args:
+    creates: "{{ dev_user_home }}/.oh-my-zsh"
+  become: true
+  become_user: "{{ dev_user }}"
+  when: not ohmyzsh_dir.stat.exists
+
+- name: Clone powerlevel10k theme
+  ansible.builtin.git:
+    repo: https://github.com/romkatv/powerlevel10k.git
+    dest: "{{ dev_user_home }}/.oh-my-zsh/custom/themes/powerlevel10k"
+    depth: 1
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Set powerlevel10k as zsh theme
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.zshrc"
+    regexp: '^ZSH_THEME='
+    line: 'ZSH_THEME="powerlevel10k/powerlevel10k"'
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Set zsh as default shell
+  ansible.builtin.user:
+    name: "{{ dev_user }}"
+    shell: "{{ default_shell }}"

@@ -1,0 +1,114 @@
+---
+# Language runtimes installation (uv, bun, rustup)
+
+# UV (Python package manager)
+- name: Check if uv is installed
+  ansible.builtin.stat:
+    path: "{{ dev_user_home }}/.local/bin/uv"
+  register: uv_binary
+
+- name: Install uv
+  ansible.builtin.shell: |
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  when: not uv_binary.stat.exists
+
+- name: Verify uv installation
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/uv --version
+  become: true
+  become_user: "{{ dev_user }}"
+  register: uv_version
+  changed_when: false
+  failed_when: false
+
+- name: Show uv version
+  ansible.builtin.debug:
+    msg: "uv version: {{ uv_version.stdout | default('not installed') }}"
+
+# Bun (JavaScript runtime)
+- name: Check if bun is installed
+  ansible.builtin.stat:
+    path: "{{ dev_user_home }}/.bun/bin/bun"
+  register: bun_binary
+
+- name: Install bun
+  ansible.builtin.shell: |
+    curl -fsSL https://bun.sh/install | bash
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  when: not bun_binary.stat.exists
+
+- name: Add bun to PATH in .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.bashrc"
+    line: 'export PATH="$HOME/.bun/bin:$PATH"'
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Add bun to PATH in .zshrc
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.zshrc"
+    line: 'export PATH="$HOME/.bun/bin:$PATH"'
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Verify bun installation
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.bun/bin/bun --version
+  become: true
+  become_user: "{{ dev_user }}"
+  register: bun_version
+  changed_when: false
+  failed_when: false
+
+- name: Show bun version
+  ansible.builtin.debug:
+    msg: "bun version: {{ bun_version.stdout | default('not installed') }}"
+
+# Rustup (Rust toolchain manager)
+- name: Check if rustup is installed
+  ansible.builtin.stat:
+    path: "{{ dev_user_home }}/.cargo/bin/rustup"
+  register: rustup_binary
+
+- name: Install rustup
+  ansible.builtin.shell: |
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  when: not rustup_binary.stat.exists
+
+- name: Add cargo to PATH in .bashrc
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.bashrc"
+    line: 'source "$HOME/.cargo/env"'
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Add cargo to PATH in .zshrc
+  ansible.builtin.lineinfile:
+    path: "{{ dev_user_home }}/.zshrc"
+    line: 'source "$HOME/.cargo/env"'
+  become: true
+  become_user: "{{ dev_user }}"
+
+- name: Verify rustup installation
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.cargo/bin/rustup --version
+  become: true
+  become_user: "{{ dev_user }}"
+  register: rustup_version
+  changed_when: false
+  failed_when: false
+
+- name: Show rustup version
+  ansible.builtin.debug:
+    msg: "rustup version: {{ rustup_version.stdout | default('not installed') }}"
