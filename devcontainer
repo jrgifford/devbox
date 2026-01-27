@@ -167,6 +167,24 @@ cmd_start() {
             config_mounts="$config_mounts -v $HOME/.gemini:/home/ubuntu/.gemini"
         fi
 
+        # GitHub CLI config (auth tokens)
+        if [ -d "$HOME/.config/gh" ]; then
+            config_mounts="$config_mounts -v $HOME/.config/gh:/home/ubuntu/.config/gh:ro"
+            log_info "Mounting ~/.config/gh for GitHub CLI auth"
+        fi
+
+        # Git config
+        if [ -f "$HOME/.gitconfig" ]; then
+            config_mounts="$config_mounts -v $HOME/.gitconfig:/home/ubuntu/.gitconfig:ro"
+            log_info "Mounting ~/.gitconfig for git config"
+        fi
+
+        # SSH keys and config (for git over SSH)
+        if [ -d "$HOME/.ssh" ]; then
+            config_mounts="$config_mounts -v $HOME/.ssh:/home/ubuntu/.ssh:ro"
+            log_info "Mounting ~/.ssh for SSH keys"
+        fi
+
         # Mount Docker socket for Docker-out-of-Docker
         local docker_args=""
         if [ -S "/var/run/docker.sock" ]; then
