@@ -1,24 +1,14 @@
 ---
-# AI Coding Agents installation (Claude Code, Codex CLI, Gemini CLI)
+# AI Coding Agents - installed via mise, this role just verifies
 
-# Claude Code - Native binary installer
-- name: Check if Claude Code is installed
-  ansible.builtin.stat:
-    path: "{{ dev_user_home }}/.claude/local/claude"
-  register: claude_binary
-
-- name: Install Claude Code
-  ansible.builtin.shell: |
-    curl -fsSL https://claude.ai/install.sh | bash
-  become: true
-  become_user: "{{ dev_user }}"
-  environment:
-    HOME: "{{ dev_user_home }}"
-  when: not claude_binary.stat.exists
+- name: Set mise paths
+  ansible.builtin.set_fact:
+    mise_shims: "{{ dev_user_home }}/.local/share/mise/shims"
 
 - name: Verify Claude Code installation
   ansible.builtin.shell: |
-    {{ dev_user_home }}/.claude/local/claude --version
+    export PATH="{{ mise_shims }}:{{ dev_user_home }}/.local/bin:$PATH"
+    claude --version
   become: true
   become_user: "{{ dev_user }}"
   register: claude_version
@@ -29,36 +19,9 @@
   ansible.builtin.debug:
     msg: "Claude Code: {{ claude_version.stdout | default('not installed') }}"
 
-# Codex CLI - Download binary from GitHub releases
-- name: Check if Codex CLI is installed
-  ansible.builtin.stat:
-    path: "{{ dev_user_home }}/.local/bin/codex"
-  register: codex_binary
-
-- name: Get latest Codex CLI release info
-  ansible.builtin.uri:
-    url: https://api.github.com/repos/openai/codex/releases/latest
-    return_content: true
-  register: codex_release
-  when: not codex_binary.stat.exists
-  failed_when: false
-
-- name: Install Codex CLI via npm (fallback)
-  ansible.builtin.shell: |
-    export PATH="{{ dev_user_home }}/.local/share/mise/shims:{{ dev_user_home }}/.local/bin:$PATH"
-    npm install -g @openai/codex
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ dev_user }}"
-  environment:
-    HOME: "{{ dev_user_home }}"
-  when: not codex_binary.stat.exists
-  failed_when: false
-
 - name: Verify Codex CLI installation
   ansible.builtin.shell: |
-    export PATH="{{ dev_user_home }}/.local/share/mise/shims:{{ dev_user_home }}/.local/bin:$PATH"
+    export PATH="{{ mise_shims }}:{{ dev_user_home }}/.local/bin:$PATH"
     codex --version
   become: true
   become_user: "{{ dev_user }}"
@@ -68,34 +31,11 @@
 
 - name: Show Codex CLI version
   ansible.builtin.debug:
-    msg: "Codex CLI: {{ codex_version.stdout | default('not installed or install failed') }}"
-
-# Gemini CLI - Requires npm (no standalone binary available)
-- name: Check if Gemini CLI is installed
-  ansible.builtin.shell: |
-    export PATH="{{ dev_user_home }}/.local/share/mise/shims:{{ dev_user_home }}/.local/bin:$PATH"
-    which gemini
-  become: true
-  become_user: "{{ dev_user }}"
-  register: gemini_which
-  changed_when: false
-  failed_when: false
-
-- name: Install Gemini CLI via npm
-  ansible.builtin.shell: |
-    export PATH="{{ dev_user_home }}/.local/share/mise/shims:{{ dev_user_home }}/.local/bin:$PATH"
-    npm install -g @google/gemini-cli
-  args:
-    executable: /bin/bash
-  become: true
-  become_user: "{{ dev_user }}"
-  environment:
-    HOME: "{{ dev_user_home }}"
-  when: gemini_which.rc != 0
+    msg: "Codex CLI: {{ codex_version.stdout | default('not installed') }}"
 
 - name: Verify Gemini CLI installation
   ansible.builtin.shell: |
-    export PATH="{{ dev_user_home }}/.local/share/mise/shims:{{ dev_user_home }}/.local/bin:$PATH"
+    export PATH="{{ mise_shims }}:{{ dev_user_home }}/.local/bin:$PATH"
     gemini --version
   become: true
   become_user: "{{ dev_user }}"

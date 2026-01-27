@@ -1,5 +1,5 @@
 ---
-# mise version manager installation and language runtimes
+# mise version manager - manages all language runtimes and CLI tools
 
 - name: Check if mise is installed
   ansible.builtin.stat:
@@ -17,36 +17,54 @@
     HOME: "{{ dev_user_home }}"
   when: not mise_binary.stat.exists
 
-- name: Add mise to .bashrc
-  ansible.builtin.lineinfile:
+- name: Ensure ~/.local/bin exists
+  ansible.builtin.file:
+    path: "{{ dev_user_home }}/.local/bin"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0755"
+
+- name: Add mise paths to .bashrc
+  ansible.builtin.blockinfile:
     path: "{{ dev_user_home }}/.bashrc"
-    line: 'eval "$(~/.local/bin/mise activate bash)"'
     create: true
+    marker: "# {mark} MISE MANAGED BLOCK"
+    block: |
+      export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+      eval "$(~/.local/bin/mise activate bash)"
   become: true
   become_user: "{{ dev_user }}"
 
-- name: Add mise to .zshrc
-  ansible.builtin.lineinfile:
+- name: Add mise paths to .zshrc
+  ansible.builtin.blockinfile:
     path: "{{ dev_user_home }}/.zshrc"
-    line: 'eval "$(~/.local/bin/mise activate zsh)"'
+    create: true
+    marker: "# {mark} MISE MANAGED BLOCK"
+    block: |
+      export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+      eval "$(~/.local/bin/mise activate zsh)"
   become: true
   become_user: "{{ dev_user }}"
 
-- name: Add ~/.local/bin to PATH in .bashrc
-  ansible.builtin.lineinfile:
-    path: "{{ dev_user_home }}/.bashrc"
-    line: 'export PATH="$HOME/.local/bin:$PATH"'
-    insertbefore: 'eval "$(~/.local/bin/mise activate bash)"'
-  become: true
-  become_user: "{{ dev_user }}"
+- name: Create mise config directory
+  ansible.builtin.file:
+    path: "{{ dev_user_home }}/.config/mise"
+    state: directory
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0755"
 
-- name: Add ~/.local/bin to PATH in .zshrc
-  ansible.builtin.lineinfile:
-    path: "{{ dev_user_home }}/.zshrc"
-    line: 'export PATH="$HOME/.local/bin:$PATH"'
-    insertbefore: 'eval "$(~/.local/bin/mise activate zsh)"'
-  become: true
-  become_user: "{{ dev_user }}"
+- name: Configure mise settings
+  ansible.builtin.copy:
+    dest: "{{ dev_user_home }}/.config/mise/config.toml"
+    owner: "{{ dev_user }}"
+    group: "{{ dev_user }}"
+    mode: "0644"
+    content: |
+      [settings]
+      experimental = true
+      python_venv_auto_create = true
 
 - name: Trust mise configuration
   ansible.builtin.shell: |
@@ -58,56 +76,53 @@
   changed_when: false
   failed_when: false
 
-# Install all language runtimes via mise
-- name: Install Ruby via mise
+# Install language runtimes via mise
+- name: Install language runtimes via mise
   ansible.builtin.shell: |
-    {{ dev_user_home }}/.local/bin/mise use --global ruby@{{ mise_ruby_version }}
+    {{ dev_user_home }}/.local/bin/mise use --global {{ item.name }}@{{ item.version }}
   become: true
   become_user: "{{ dev_user }}"
   environment:
     HOME: "{{ dev_user_home }}"
-  args:
-    creates: "{{ dev_user_home }}/.local/share/mise/installs/ruby"
+    GITHUB_TOKEN: "{{ lookup('env', 'GITHUB_TOKEN') | default(omit) }}"
+  loop: "{{ mise_runtimes }}"
+  loop_control:
+    label: "{{ item.name }}@{{ item.version }}"
+  register: runtime_install
+  changed_when: "'installed' in runtime_install.stderr or 'installed' in runtime_install.stdout"
+  failed_when: false
 
-- name: Install Python via mise
-  ansible.builtin.shell: |
-    {{ dev_user_home }}/.local/bin/mise use --global python@{{ mise_python_version }}
-  become: true
-  become_user: "{{ dev_user }}"
-  environment:
-    HOME: "{{ dev_user_home }}"
-  args:
-    creates: "{{ dev_user_home }}/.local/share/mise/installs/python"
+- name: Report runtime installation failures
+  ansible.builtin.debug:
+    msg: "WARNING: Failed to install {{ item.item.name }}@{{ item.item.version }}: {{ item.stderr | default('unknown error') }}"
+  loop: "{{ runtime_install.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.rc != 0
 
-- name: Install Node.js via mise
+# Install CLI tools via mise
+- name: Install CLI tools via mise
   ansible.builtin.shell: |
-    {{ dev_user_home }}/.local/bin/mise use --global node@{{ mise_node_version }}
+    {{ dev_user_home }}/.local/bin/mise use --global {{ item.name }}@{{ item.version }}
   become: true
   become_user: "{{ dev_user }}"
   environment:
     HOME: "{{ dev_user_home }}"
-  args:
-    creates: "{{ dev_user_home }}/.local/share/mise/installs/node"
+    GITHUB_TOKEN: "{{ lookup('env', 'GITHUB_TOKEN') | default(omit) }}"
+  loop: "{{ mise_tools }}"
+  loop_control:
+    label: "{{ item.name }}@{{ item.version }}"
+  register: tool_install
+  changed_when: "'installed' in tool_install.stderr or 'installed' in tool_install.stdout"
+  failed_when: false
 
-- name: Install Go via mise
-  ansible.builtin.shell: |
-    {{ dev_user_home }}/.local/bin/mise use --global go@{{ mise_go_version }}
-  become: true
-  become_user: "{{ dev_user }}"
-  environment:
-    HOME: "{{ dev_user_home }}"
-  args:
-    creates: "{{ dev_user_home }}/.local/share/mise/installs/go"
-
-- name: Install Rust via mise
-  ansible.builtin.shell: |
-    {{ dev_user_home }}/.local/bin/mise use --global rust@{{ mise_rust_version }}
-  become: true
-  become_user: "{{ dev_user }}"
-  environment:
-    HOME: "{{ dev_user_home }}"
-  args:
-    creates: "{{ dev_user_home }}/.local/share/mise/installs/rust"
+- name: Report tool installation failures
+  ansible.builtin.debug:
+    msg: "WARNING: Failed to install {{ item.item.name }}@{{ item.item.version }}: {{ item.stderr | default('unknown error') }}"
+  loop: "{{ tool_install.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: item.rc != 0
 
 - name: Verify mise installation
   ansible.builtin.shell: |
@@ -121,7 +136,7 @@
   ansible.builtin.debug:
     msg: "mise version: {{ mise_version.stdout }}"
 
-- name: Show installed runtimes
+- name: Show installed tools and runtimes
   ansible.builtin.shell: |
     {{ dev_user_home }}/.local/bin/mise list
   become: true
@@ -131,6 +146,6 @@
   register: mise_list
   changed_when: false
 
-- name: Display installed runtimes
+- name: Display installed tools and runtimes
   ansible.builtin.debug:
     msg: "{{ mise_list.stdout_lines }}"

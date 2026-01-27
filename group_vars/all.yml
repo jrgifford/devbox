@@ -13,12 +13,46 @@ timezone: America/New_York
 tailscale_auth_key: "{{ lookup('env', 'TAILSCALE_AUTH_KEY') }}"
 tailscale_hostname: devbox
 
-# mise-managed language versions
-mise_ruby_version: "latest"
-mise_python_version: "latest"
-mise_node_version: "lts"
-mise_go_version: "latest"
-mise_rust_version: "stable"
+# mise-managed language runtimes
+mise_runtimes:
+  - name: python
+    version: "3.12.12"
+  - name: node
+    version: "22.22.0"
+  - name: ruby
+    version: "3.4.1"
+  - name: go
+    version: "latest"
+  - name: rust
+    version: "stable"
+
+# mise-managed tools (installed via mise)
+mise_tools:
+  - name: uv
+    version: "latest"
+  - name: ripgrep
+    version: "latest"
+  - name: fd
+    version: "latest"
+  - name: bat
+    version: "latest"
+  - name: fzf
+    version: "latest"
+  - name: lazygit
+    version: "latest"
+  - name: jq
+    version: "latest"
+  - name: yq
+    version: "latest"
+  - name: delta
+    version: "latest"
+  # AI coding agents
+  - name: claude
+    version: "latest"
+  - name: codex
+    version: "latest"
+  - name: gemini
+    version: "latest"
 
 # Shell configuration
 default_shell: /usr/bin/zsh

@@ -44,7 +44,7 @@
     - role: mise
       tags: [mise, runtimes]
 
-    # CLI tools (ripgrep, fd, bat, fzf, lazygit)
+    # Additional tools not managed by mise
     - role: tools
       tags: [tools, cli]
 
@@ -59,17 +59,15 @@
           ==========================================
           Devbox provisioning complete!
 
-          Language runtimes (via mise):
-          - Ruby {{ mise_ruby_version }}
-          - Python {{ mise_python_version }}
-          - Node.js {{ mise_node_version }}
-          - Go {{ mise_go_version }}
-          - Rust {{ mise_rust_version }}
+          Everything managed by mise:
+          - Language runtimes: python, node, ruby, go, rust
+          - CLI tools: uv, ripgrep, fd, bat, fzf, lazygit, jq, yq, delta
 
-          Tools:
+          System tools:
           - Docker
           - GitHub CLI (gh)
           - Tailscale
+          - git-lfs
 
           AI Agents:
           - Claude Code
