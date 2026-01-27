@@ -4,9 +4,8 @@ A CLI tool for managing a multipass development VM provisioned with Ansible.
 
 ## Features
 
-- **Ubuntu 24.04 LTS** VM with 8 CPUs, 16GB RAM, 100GB disk
-- **Version managers**: mise (Ruby, Python, Go, Node, etc.)
-- **Language runtimes**: uv (Python), bun (JavaScript), rustup (Rust)
+- **Ubuntu 25.10** VM with 8 CPUs, 16GB RAM, 100GB disk
+- **Language runtimes via mise**: Ruby, Python, Node.js, Go, Rust
 - **Shell**: zsh with oh-my-zsh and powerlevel10k theme
 - **AI coding agents**: Claude Code, Codex CLI, Gemini CLI
 - **Dev tools**: Docker, GitHub CLI
@@ -65,6 +64,18 @@ VM_MEMORY="16G"
 VM_DISK="100G"
 ```
 
+### Language Versions
+
+Edit `group_vars/all.yml` to customize mise-managed versions:
+
+```yaml
+mise_ruby_version: "latest"
+mise_python_version: "latest"
+mise_node_version: "lts"
+mise_go_version: "latest"
+mise_rust_version: "stable"
+```
+
 ## Installed Tools
 
 After provisioning, these tools are available in the VM:
@@ -72,9 +83,11 @@ After provisioning, these tools are available in the VM:
 | Tool | Purpose |
 |------|---------|
 | mise | Version manager for multiple languages |
-| uv | Fast Python package manager |
-| bun | JavaScript runtime and package manager |
-| rustup | Rust toolchain manager |
+| ruby | Ruby runtime (via mise) |
+| python | Python runtime (via mise) |
+| node | Node.js runtime (via mise) |
+| go | Go runtime (via mise) |
+| rust/cargo | Rust toolchain (via mise) |
 | Docker | Container runtime |
 | gh | GitHub CLI |
 | claude | Claude Code AI assistant |
@@ -92,18 +105,13 @@ After provisioning, these tools are available in the VM:
 ├── group_vars/all.yml      # Shared Ansible variables
 ├── playbooks/site.yml      # Main Ansible playbook
 └── roles/
-    ├── base/               # System packages, timezone
+    ├── base/               # System packages, build deps
     ├── docker/             # Docker Engine
     ├── tailscale/          # Tailscale VPN
     ├── shell/              # zsh, oh-my-zsh, powerlevel10k
-    ├── mise/               # mise version manager
-    ├── runtimes/           # uv, bun, rustup
+    ├── mise/               # mise + Ruby, Python, Node, Go, Rust
     └── ai-agents/          # Claude Code, Codex, Gemini
 ```
-
-## Acknowledgments
-
-Inspired by [agentic_coding_flywheel_setup](https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup) by Jeffrey Emanuel - a system setup tool that transforms a fresh VPS into a fully-armed agentic coding environment.
 
 ## License
 

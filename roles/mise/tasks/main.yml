@@ -1,5 +1,5 @@
 ---
-# mise version manager installation
+# mise version manager installation and language runtimes
 
 - name: Check if mise is installed
   ansible.builtin.stat:
@@ -58,7 +58,28 @@
   changed_when: false
   failed_when: false
 
-- name: Install Node.js via mise (required for Gemini CLI)
+# Install all language runtimes via mise
+- name: Install Ruby via mise
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/mise use --global ruby@{{ mise_ruby_version }}
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  args:
+    creates: "{{ dev_user_home }}/.local/share/mise/installs/ruby"
+
+- name: Install Python via mise
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/mise use --global python@{{ mise_python_version }}
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  args:
+    creates: "{{ dev_user_home }}/.local/share/mise/installs/python"
+
+- name: Install Node.js via mise
   ansible.builtin.shell: |
     {{ dev_user_home }}/.local/bin/mise use --global node@{{ mise_node_version }}
   become: true
@@ -67,6 +88,26 @@
     HOME: "{{ dev_user_home }}"
   args:
     creates: "{{ dev_user_home }}/.local/share/mise/installs/node"
+
+- name: Install Go via mise
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/mise use --global go@{{ mise_go_version }}
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  args:
+    creates: "{{ dev_user_home }}/.local/share/mise/installs/go"
+
+- name: Install Rust via mise
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/mise use --global rust@{{ mise_rust_version }}
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  args:
+    creates: "{{ dev_user_home }}/.local/share/mise/installs/rust"
 
 - name: Verify mise installation
   ansible.builtin.shell: |
@@ -79,3 +120,17 @@
 - name: Show mise version
   ansible.builtin.debug:
     msg: "mise version: {{ mise_version.stdout }}"
+
+- name: Show installed runtimes
+  ansible.builtin.shell: |
+    {{ dev_user_home }}/.local/bin/mise list
+  become: true
+  become_user: "{{ dev_user }}"
+  environment:
+    HOME: "{{ dev_user_home }}"
+  register: mise_list
+  changed_when: false
+
+- name: Display installed runtimes
+  ansible.builtin.debug:
+    msg: "{{ mise_list.stdout_lines }}"

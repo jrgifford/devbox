@@ -40,13 +40,13 @@
     - role: shell
       tags: [shell, user]
 
-    # Version manager (mise)
+    # Version manager + language runtimes (mise)
     - role: mise
       tags: [mise, runtimes]
 
-    # Language runtimes
-    - role: runtimes
-      tags: [runtimes, languages]
+    # CLI tools (ripgrep, fd, bat, fzf, lazygit)
+    - role: tools
+      tags: [tools, cli]
 
     # AI coding agents
     - role: ai-agents
@@ -59,14 +59,19 @@
           ==========================================
           Devbox provisioning complete!
 
-          Installed tools:
-          - mise (version manager)
-          - uv (Python)
-          - bun (JavaScript)
-          - rustup (Rust)
+          Language runtimes (via mise):
+          - Ruby {{ mise_ruby_version }}
+          - Python {{ mise_python_version }}
+          - Node.js {{ mise_node_version }}
+          - Go {{ mise_go_version }}
+          - Rust {{ mise_rust_version }}
+
+          Tools:
           - Docker
           - GitHub CLI (gh)
           - Tailscale
+
+          AI Agents:
           - Claude Code
           - Codex CLI
           - Gemini CLI

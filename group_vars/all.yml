@@ -13,8 +13,12 @@ timezone: America/New_York
 tailscale_auth_key: "{{ lookup('env', 'TAILSCALE_AUTH_KEY') }}"
 tailscale_hostname: devbox
 
-# mise configuration
-mise_node_version: "22"  # LTS version for Gemini CLI
+# mise-managed language versions
+mise_ruby_version: "latest"
+mise_python_version: "latest"
+mise_node_version: "lts"
+mise_go_version: "latest"
+mise_rust_version: "stable"
 
 # Shell configuration
 default_shell: /usr/bin/zsh

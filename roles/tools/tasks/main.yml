@@ -1,0 +1,32 @@
+---
+# CLI tools installation (gh is installed by base role)
+
+- name: Install CLI tools
+  ansible.builtin.apt:
+    name:
+      - ripgrep
+      - fd-find
+      - bat
+      - fzf
+      - git-lfs
+    state: present
+    update_cache: true
+
+- name: Initialize git-lfs
+  become: true
+  become_user: "{{ dev_user }}"
+  ansible.builtin.command: git lfs install
+  args:
+    creates: "{{ dev_user_home }}/.gitconfig"
+  register: git_lfs
+  changed_when: git_lfs.rc == 0
+
+- name: Install lazygit
+  ansible.builtin.shell: |
+    LAZYGIT_VERSION=$(curl -s "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*')
+    curl -Lo lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_x86_64.tar.gz"
+    tar xf lazygit.tar.gz lazygit
+    install lazygit /usr/local/bin
+    rm lazygit lazygit.tar.gz
+  args:
+    creates: /usr/local/bin/lazygit
