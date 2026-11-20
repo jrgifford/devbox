@@ -66,14 +66,11 @@ VM_DISK="100G"
 
 ### Language Versions
 
-Edit `group_vars/all.yml` to customize mise-managed versions:
+Edit the existing entries under `mise_runtimes` in `group_vars/all.yml` to customize mise-managed versions. For example, the Ruby entry is:
 
 ```yaml
-mise_ruby_version: "latest"
-mise_python_version: "latest"
-mise_node_version: "lts"
-mise_go_version: "latest"
-mise_rust_version: "stable"
+  - name: ruby
+    version: "3.4.13"
 ```
 
 ## Installed Tools

@@ -20,7 +20,7 @@ mise_runtimes:
   - name: node
     version: "22.22.0"
   - name: ruby
-    version: "3.4.1"
+    version: "3.4.13"
   - name: go
     version: "latest"
   - name: rust
